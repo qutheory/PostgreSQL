@@ -1,7 +1,7 @@
 #if os(Linux)
 
 import XCTest
-@testable import PostgreSQLTestSuite
+@testable import PostgreSQLTests
 
 XCTMain([
     testCase(PostgreSQLTests.allTests)

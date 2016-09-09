@@ -21,7 +21,7 @@ extension Node {
 		case .number(.int(let int)):
 			return String(int).utf8
         default:
-            return "".utf8
+            return String(UInt8(0)).utf8
         }
     }
 }

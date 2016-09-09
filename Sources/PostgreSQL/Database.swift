@@ -29,7 +29,7 @@ public class Database {
     }
     
     @discardableResult
-    public func execute(_ query: String, _ values: [NodeRepresentable]? = [], on connection: Connection? = nil) throws -> [[String: Node]] {
+    public func execute(_ query: String, _ values: [Node]? = [], on connection: Connection? = nil) throws -> [[String: Node]] {
         let internalConnection: Connection 
 
         if let conn = connection {
@@ -43,8 +43,9 @@ public class Database {
         }
         
         let res: Result.ResultPointer
+        
         if let values = values, values.count > 0 {
-			let paramsValues = bind(try values.map { try $0.makeNode() })
+			let paramsValues = bind(values)
             res = PQexecParams(internalConnection.connection, query, Int32(values.count), nil, paramsValues, nil, nil, Int32(0))
             
             defer {
@@ -81,7 +82,7 @@ public class Database {
             var ch = [UInt8](values[i].utf8)
             ch.append(0)
             v.append(ch)
-            paramsValues[i] = UnsafePointer<Int8>(v.last!)
+            paramsValues[i] = UnsafePointer<Int8>(OpaquePointer(v.last!))
         }
         return paramsValues
     }

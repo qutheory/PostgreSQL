@@ -1,0 +1,16 @@
+os:
+  - linux
+  - osx
+language: generic
+sudo: required
+dist: trusty
+osx_image: xcode8
+services:
+  - postgresql
+addons:
+  postgresql: "9.4"
+# before_script:
+  # - psql -c 'create database test;' -U postgres
+script:
+  - eval "$(curl -sL swift.vapor.sh/ci)"
+  - eval "$(curl -sL swift.vapor.sh/codecov)"

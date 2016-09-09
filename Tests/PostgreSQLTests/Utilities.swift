@@ -8,7 +8,7 @@ extension PostgreSQL.Database {
                 host: "127.0.0.1",
                 port: "5432",
                 dbname: "test",
-                user: "user_testing",
+                user: "postgres",
                 password: ""
                 
             )
@@ -22,7 +22,7 @@ extension PostgreSQL.Database {
             print("Error: \(error)")
             print()
             print("You must configure PostgreSQL to run with the following configuration: ")
-            print("    user: 'user_testing'")
+            print("    user: 'postgres'")
             print("    password: '' // (empty)")
             print("    host: '127.0.0.1'")
             print("    database: 'test'")

@@ -15,7 +15,7 @@ public class Result {
         self.resultPointer = resultPointer
     }
     
-    lazy var dictionary: [[String: Node]] = { [unowned self] in
+    lazy var dictionary: [[String: Node]] = { 
         let rowCount = Int(PQntuples(self.resultPointer))
         let columnCount = Int(PQnfields(self.resultPointer))
         
