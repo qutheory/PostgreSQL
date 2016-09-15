@@ -5,7 +5,7 @@ language: generic
 sudo: required
 env:
   - DB=postgres
-dist: trusty
+dist: precise
 osx_image: xcode8
 addons:
   postgresql: "9.4"
