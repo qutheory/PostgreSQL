@@ -4,16 +4,13 @@ os:
 language: generic
 sudo: required
 env:
-  global:
-    - PGPORT=5433
-    - PGHOST=localhost
-    - DATABASE_URL=postgres://localhost:5433/your_db
+  - DB=postgres
 dist: trusty
 osx_image: xcode8
-services:
-  - postgresql
+addons:
+  postgresql: "9.4" # don't need Services when using addons
 before_script:
-  - sudo psql -U postgres -c 'CREATE DATABASE test;'
+  - psql -c 'create database test;' -U postgres
 script:
   - eval "$(curl -sL swift.vapor.sh/ci)"
   - eval "$(curl -sL swift.vapor.sh/codecov)"
