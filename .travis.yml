@@ -2,16 +2,15 @@ os:
   - linux
   #- osx
 language: generic
-sudo: false
-dist: precise
+sudo: true
+dist: trusty
 osx_image: xcode8
 addons:
   apt:
     packages:
-      - clang
-      - libicu-dev
-      - uuid-dev
-  postgresql: "9.4"
+      - postgresql-9.4
+before_install:
+     - sudo -u postgres sh -c "createuser -s -p 5432 travis; createdb -O travis -p 5432 travis; createuser -s -p 5433 travis; createdb -O travis -p 5433 travis"
 services:
   - postgresql
 before_script:
