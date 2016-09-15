@@ -12,7 +12,7 @@ addons:
 services:
   - postgresql
 before_script:
-  - /etc/init.d/postgresql status
+  - sudo service postgresql status
   # - psql -c 'create database test;' -U postgres
 script:
   - eval "$(curl -sL swift.vapor.sh/ci)"
