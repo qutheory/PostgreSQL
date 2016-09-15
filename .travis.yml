@@ -8,9 +8,12 @@ env:
 dist: trusty
 osx_image: xcode8
 addons:
-  postgresql: "9.4" # don't need Services when using addons
+  postgresql: "9.4"
+services:
+  - postgresql
 before_script:
-  - psql -c 'create database test;' -U postgres
+  - etc/init.d/postrgesql status
+  # - psql -c 'create database test;' -U postgres
 script:
   - eval "$(curl -sL swift.vapor.sh/ci)"
   - eval "$(curl -sL swift.vapor.sh/codecov)"
