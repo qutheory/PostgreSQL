@@ -50,16 +50,6 @@ public class Database {
             res = PQexecParams(internalConnection.connection, query, Int32(values.count), nil, paramsValues, nil, nil, Int32(0))
 
             defer {
-                for i in 0..<values.count {
-                    let p = paramsValues[i]
-                    let mp = UnsafeMutablePointer(mutating: p)
-                    mp?.deinitialize()
-                    var i = 0
-                    while p?[i] != 0 {
-                        i += 1
-                    }
-                    mp?.deallocate(capacity: i)
-                }
                 paramsValues.deinitialize()
                 paramsValues.deallocate(capacity: values.count)
             }
