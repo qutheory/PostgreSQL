@@ -16,11 +16,24 @@ public final class Connection {
         return false
     }
 
-    public init(host: String = "localhost", port: String = "5432", dbname: String, user: String, password: String) throws {
-        self.connection = PQconnectdb("host='\(host)' port='\(port)' dbname='\(dbname)' user='\(user)' password='\(password)'")
-        if !self.connected {
-            throw DatabaseError.cannotEstablishConnection(error)
+    public init(params: String ...) throws {
+        let keys = params.filter { params.index(of: $0)! % 2 == 0 }
+        let values = params.filter { params.index(of: $0)! % 2 != 0 }
+        
+        var connectionComponents = [String]()
+        
+        for i in 0..<(params.count / 2) {
+            connectionComponents.append("\(keys[i])='\(values[i])'")
         }
+        
+        self.connection = PQconnectdb(connectionComponents.joined())
+        if !self.connected {
+            throw DatabaseError.cannotEstablishConnection(self.error)
+        }
+    }
+    
+    public convenience init(host: String = "localhost", port: String = "5432", dbname: String, user: String, password: String) throws {
+        try self.init(params: "host", host, "port", port, "dbname", dbname, "user", user, "password", password)
     }
 
     public func reset() throws {
