@@ -6,6 +6,7 @@ class PostgreSQLTests: XCTestCase {
         ("testSelectVersion", testSelectVersion),
         ("testTables", testTables),
         ("testParameterization", testParameterization),
+        ("testCustomType", testCustomType),
     ]
 
     var postgreSQL: PostgreSQL.Database!
@@ -118,5 +119,19 @@ class PostgreSQLTests: XCTestCase {
         } catch {
             XCTFail("Testing parameterization failed: \(error)")
         }
+    }
+    
+    func testCustomType() throws {
+        let uuidString = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+        let dateString = "2016-10-24 23:04:19.223+00"
+        
+        try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+        try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIMESTAMP WITH TIME ZONE)")
+        try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .string(dateString)])
+        
+        let result = try postgreSQL.execute("SELECT * FROM foo").first
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result!["uuid"]?.string, uuidString)
+        XCTAssertEqual(result!["date"]?.string, dateString)
     }
 }

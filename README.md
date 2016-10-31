@@ -56,7 +56,7 @@ Each call to `execute()` creates a new connection to the PostgreSQL database. Th
 If you would like to re-use a connection between calls to execute, create a reusable connection and pass it as the third parameter to `execute()`.
 
 ```swift
-let connection = postgreSQL.makeConnection()
+let connection = try postgreSQL.makeConnection()
 let result = try postgreSQL.execute("SELECT LAST_INSERTED_ID() as id", [], connection)
 ```
 
