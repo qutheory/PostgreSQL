@@ -6,6 +6,7 @@ class PostgreSQLTests: XCTestCase {
         ("testSelectVersion", testSelectVersion),
         ("testTables", testTables),
         ("testParameterization", testParameterization),
+        ("testDataType", testDataType),
         ("testCustomType", testCustomType),
     ]
 
@@ -119,6 +120,22 @@ class PostgreSQLTests: XCTestCase {
         } catch {
             XCTFail("Testing parameterization failed: \(error)")
         }
+    }
+    
+    func testDataType() throws {
+        let data: [UInt8] = [1, 2, 3, 4, 5, 0, 6, 7, 8, 9, 0]
+        
+        try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+        try postgreSQL.execute("CREATE TABLE foo (bar BYTEA)")
+        try postgreSQL.execute("INSERT INTO foo VALUES ($1)", [.bytes(data)])
+        
+        let result = try postgreSQL.execute("SELECT * FROM foo").first
+        XCTAssertNotNil(result)
+        
+        let resultBytesNode = result!["bar"]
+        XCTAssertNotNil(resultBytesNode)
+        
+        XCTAssertEqual(resultBytesNode!, .bytes(data))
     }
     
     func testCustomType() throws {

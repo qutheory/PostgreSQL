@@ -31,47 +31,58 @@ public class Database {
 
     @discardableResult
     public func execute(_ query: String, _ values: [Node]? = [], on connection: Connection? = nil) throws -> [[String: Node]] {
-        let internalConnection: Connection
-
-        if let conn = connection {
-            internalConnection = conn
-        } else {
-            internalConnection = try makeConnection()
-        }
-
         guard !query.isEmpty else {
             throw DatabaseError.noQuery
         }
+        
+        let connection = try connection ?? makeConnection()
 
         let res: Result.ResultPointer
 
-        if let values = values, values.count > 0 {
-			let paramsValues = bind(values)
-            res = PQexecParams(internalConnection.connection, query, Int32(values.count), nil, paramsValues, nil, nil, Int32(0))
-
-            defer {
-                for i in 0..<values.count {
-                    let p = paramsValues[i]
-                    if p == nil {
-                        continue
-                    }
+        if let values = values, !values.isEmpty {
+            var paramTypes: [Oid] = []
+            var paramValues: [[Int8]?] = []
+            var paramLengths: [Int32] = []
+            var paramFormats: [Int32] = []
+            
+            for value in values {
+                switch value {
+                case .bytes(let bytes):
+                    paramValues.append(bytes.map { Int8(bitPattern: $0) })
+                    paramTypes.append(OID.bytea.rawValue)
+                    paramLengths.append(Int32(bytes.count))
+                    paramFormats.append(1)
                     
-                    let mp = UnsafeMutablePointer(mutating: p)
-                    mp?.deinitialize()
-                    var i = 0
-                    while p?[i] != 0 {
-                        i += 1
+                case .null:
+                    // PQexecParams converts nil pointer to NULL.
+                    // see: https://www.postgresql.org/docs/9.1/static/libpq-exec.html
+                    paramValues.append(nil)
+                    paramTypes.append(0)
+                    paramLengths.append(0)
+                    paramFormats.append(0)
+                    
+                default:
+                    if let string = value.string {
+                        paramValues.append(Array(string.utf8CString))
                     }
-                    mp?.deallocate(capacity: i)
+                    else {
+                        paramValues.append(nil)
+                    }
+                    paramTypes.append(0)
+                    paramLengths.append(0)
+                    paramFormats.append(0)
                 }
-                paramsValues.deinitialize()
-                paramsValues.deallocate(capacity: values.count)
             }
+            
+            res = PQexecParams(connection.connection, query, Int32(values.count), paramTypes, paramValues.map { UnsafePointer<Int8>($0) }, paramLengths, paramFormats, 0)
+            
         } else {
-            res = PQexec(internalConnection.connection, query)
+            res = PQexec(connection.connection, query)
         }
 
-        defer { PQclear(res) }
+        defer {
+            PQclear(res)
+        }
 
         switch Status(result: res) {
         case .nonFatalError, .fatalError, .unknown:
@@ -79,34 +90,8 @@ public class Database {
         case .tuplesOk:
             return Result(resultPointer: res).dictionary
         default:
-            break
+            return []
         }
-        return []
-    }
-
-    func bind(_ values: [Node]) -> UnsafeMutablePointer<UnsafePointer<Int8>?> {
-        let paramsValues = UnsafeMutablePointer<UnsafePointer<Int8>?>
-            .allocate(capacity: values.count)
-
-        for i in 0..<values.count {
-            // PQexecParams converts nil pointer to NULL.
-            // see: https://www.postgresql.org/docs/9.1/static/libpq-exec.html
-            if values[i] == .null {
-                paramsValues[i] = nil
-                continue
-            }
-            
-            var ch = values[i].string?.bytes ?? []
-            ch.append(0)
-
-            let p = UnsafeMutablePointer<Int8>.allocate(capacity: ch.count)
-            for (i, c) in ch.enumerated() {
-                p[i] = Int8(bitPattern: c)
-            }
-
-            paramsValues[i] = UnsafePointer(p)
-        }
-        return paramsValues
     }
 
     public func makeConnection() throws -> Connection {

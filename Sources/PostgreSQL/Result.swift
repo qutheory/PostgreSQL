@@ -16,8 +16,8 @@ public class Result {
     }
 
     lazy var dictionary: [[String: Node]] = {
-        let rowCount = Int(PQntuples(self.resultPointer))
-        let columnCount = Int(PQnfields(self.resultPointer))
+        let rowCount = PQntuples(self.resultPointer)
+        let columnCount = PQnfields(self.resultPointer)
 
         guard rowCount > 0 && columnCount > 0 else {
             return []
@@ -30,13 +30,12 @@ public class Result {
             for column in 0..<columnCount {
                 let name = String(cString: PQfname(self.resultPointer, Int32(column)))
 
-                if PQgetisnull(self.resultPointer, Int32(row), Int32(column)) == 1 {
+                if PQgetisnull(self.resultPointer, row, column) == 1 {
                     item[name] = .null
                 } else {
-                    let value = String(cString: PQgetvalue(self.resultPointer, Int32(row), Int32(column)))
-                    let type = PQftype(self.resultPointer, Int32(column))
+                    let value = String(cString: PQgetvalue(self.resultPointer, row, column))
+                    let type = PQftype(self.resultPointer, column)
                     item[name] = Node(oid: type, value: value)
-
                 }
             }
             parsedData.append(item)
