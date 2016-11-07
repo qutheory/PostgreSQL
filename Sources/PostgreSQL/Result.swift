@@ -6,12 +6,14 @@ import Foundation
     import CPostgreSQLMac
 #endif
 
-public class Result {
-    public typealias ResultPointer = OpaquePointer
+class Result {
+    typealias ResultPointer = OpaquePointer
 
     private(set) var resultPointer: ResultPointer?
+    private let configuration: Database.Configuration
 
-    init(resultPointer: ResultPointer) {
+    init(configuration: Database.Configuration, resultPointer: ResultPointer) {
+        self.configuration = configuration
         self.resultPointer = resultPointer
     }
 
@@ -32,10 +34,12 @@ public class Result {
 
                 if PQgetisnull(self.resultPointer, row, column) == 1 {
                     item[name] = .null
-                } else {
-                    let value = String(cString: PQgetvalue(self.resultPointer, row, column))
+                } else if let value = PQgetvalue(self.resultPointer, row, column) {
                     let type = PQftype(self.resultPointer, column)
-                    item[name] = Node(oid: type, value: value)
+                    let length = Int(PQgetlength(self.resultPointer, row, column))
+                    item[name] = Node(configuration: self.configuration, oid: type, value: value, length: length)
+                } else {
+                    item[name] = .null
                 }
             }
             parsedData.append(item)
