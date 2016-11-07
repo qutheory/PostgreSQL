@@ -23,7 +23,7 @@ public final class Connection {
             connectionComponents.append("\(key)='\(value)'")
         }
         
-        self.connection = PQconnectdb(connectionComponents.joined())
+        self.connection = PQconnectdb(connectionComponents.joined(separator: " "))
         if !self.connected {
             throw DatabaseError.cannotEstablishConnection(self.error)
         }
