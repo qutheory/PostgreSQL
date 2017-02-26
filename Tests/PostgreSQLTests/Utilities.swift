@@ -5,10 +5,10 @@ import Foundation
 extension PostgreSQL.Database {
     static func makeTestConnection() -> PostgreSQL.Database {
         do {
-            let postgreSQL = PostgreSQL.Database(
+            let postgreSQL = try PostgreSQL.Database(
                 host: "127.0.0.1",
-                port: "5432",
-                dbname: "test",
+                port: 5432,
+                database: "test",
                 user: "postgres",
                 password: ""
             )

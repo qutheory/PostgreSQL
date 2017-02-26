@@ -35,10 +35,10 @@ class PostgreSQLTests: XCTestCase {
     }
     
     func testConnectionFailure() throws {
-        let database = PostgreSQL.Database(
+        let database = try PostgreSQL.Database(
             host: "127.0.0.1",
-            port: "5432",
-            dbname: "some_long_db_name_that_does_not_exist",
+            port: 5432,
+            database: "some_long_db_name_that_does_not_exist",
             user: "postgres",
             password: ""
         )

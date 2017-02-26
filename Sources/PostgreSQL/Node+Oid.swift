@@ -104,7 +104,7 @@ enum OID: Oid {
 }
 
 extension Node {
-    init(configuration: Database.Configuration, oid: Oid, value: UnsafeMutablePointer<Int8>, length: Int) {
+    init(configuration: Configuration, oid: Oid, value: UnsafeMutablePointer<Int8>, length: Int) {
         // Check if we support the type
         guard let type = OID(rawValue: oid) else {
             // Check if we have an array type and try to convert
@@ -121,7 +121,7 @@ extension Node {
         self = Node(configuration: configuration, oid: type, value: value, length: length)
     }
     
-    init(configuration: Database.Configuration, oid: OID, value: UnsafeMutablePointer<Int8>, length: Int) {
+    init(configuration: Configuration, oid: OID, value: UnsafeMutablePointer<Int8>, length: Int) {
         switch oid {
         case .bool:
             self = .bool(value[0] != 0)
@@ -220,7 +220,7 @@ extension Node {
         }
     }
     
-    private init?(configuration: Database.Configuration, arrayValue: UnsafeMutablePointer<Int8>) {
+    private init?(configuration: Configuration, arrayValue: UnsafeMutablePointer<Int8>) {
         let elementOid = Oid(bigEndian: PostgresBinaryUtils.convert(arrayValue.advanced(by: 8)))
         
         // Check if we support the type
@@ -248,7 +248,7 @@ extension Node {
         self = Node.parseArray(configuration: configuration, type: type, dimensionLengths: dimensionLengths, pointer: &pointer)
     }
     
-    private static func parseArray(configuration: Database.Configuration, type: OID, dimensionLengths: [Int], pointer: inout UnsafeMutablePointer<Int8>) -> Node {
+    private static func parseArray(configuration: Configuration, type: OID, dimensionLengths: [Int], pointer: inout UnsafeMutablePointer<Int8>) -> Node {
         // Get the length of the array
         let arrayLength = dimensionLengths[0]
         

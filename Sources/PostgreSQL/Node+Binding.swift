@@ -1,7 +1,11 @@
 import Foundation
 import Core
 
-extension Node {
+protocol Bindable {
+    var postgresBindingData: ([Int8]?, OID?, DataFormat) { get }
+}
+
+extension Node: Bindable {
     var postgresBindingData: ([Int8]?, OID?, DataFormat) {
         switch self {
         case .null:
@@ -69,13 +73,13 @@ extension Node {
     }
 }
 
-extension Bool {
+extension Bool: Bindable {
     var postgresBindingData: ([Int8]?, OID?, DataFormat) {
         return ([self ? 1 : 0], .bool, .binary)
     }
 }
 
-extension Int {
+extension Int: Bindable {
     var postgresBindingData: ([Int8]?, OID?, DataFormat) {
         let count = MemoryLayout.size(ofValue: self)
         
@@ -97,7 +101,7 @@ extension Int {
     }
 }
 
-extension Double {
+extension Double: Bindable {
     var postgresBindingData: ([Int8]?, OID?, DataFormat) {
         let count = MemoryLayout.size(ofValue: self)
         
@@ -117,7 +121,7 @@ extension Double {
     }
 }
 
-extension String {
+extension String: Bindable {
     var postgresBindingData: ([Int8]?, OID?, DataFormat) {
         return (utf8CString.array, .none, .string)
     }

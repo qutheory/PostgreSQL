@@ -20,7 +20,7 @@ extension Database {
         case emptyQuery
         case unknown
 
-        init(result: Result.ResultPointer) {
+        init(result: Result.Pointer) {
             switch PQresultStatus(result) {
             case PGRES_COMMAND_OK:
                 self = .commandOk
