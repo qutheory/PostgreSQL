@@ -26,6 +26,8 @@ class PostgreSQLTests: XCTestCase {
         ("testBitStrings", testBitStrings),
         ("testVarBitStrings", testVarBitStrings),
         ("testUnsupportedObject", testUnsupportedObject),
+        ("testNotification", testNotification),
+        ("testNotificationWithPayload", testNotificationWithPayload),
     ]
 
     var postgreSQL: PostgreSQL.Database!
@@ -665,4 +667,38 @@ class PostgreSQLTests: XCTestCase {
             }
         }
     }
+	
+	func testNotification() throws {
+		let testExpectation = expectation(description: "Receive notification")
+		
+		try postgreSQL.listen(to: "test_channel1") { notification in
+			XCTAssertEqual(notification.channel, "test_channel1")
+			XCTAssertNil(notification.payload)
+			
+			testExpectation.fulfill()
+		}
+		
+		sleep(1)
+		
+		try postgreSQL.notify(channel: "test_channel1", payload: nil)
+		
+		waitForExpectations(timeout: 5)
+	}
+	
+	func testNotificationWithPayload() throws {
+		let testExpectation = expectation(description: "Receive notification with payload")
+		
+		try postgreSQL.listen(to: "test_channel2") { notification in
+			XCTAssertEqual(notification.channel, "test_channel2")
+			XCTAssertEqual(notification.payload, "test_payload")
+			
+			testExpectation.fulfill()
+		}
+		
+		sleep(1)
+		
+		try postgreSQL.notify(channel: "test_channel2", payload: "test_payload")
+		
+		waitForExpectations(timeout: 5)
+	}
 }
