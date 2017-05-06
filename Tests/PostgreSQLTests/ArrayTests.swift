@@ -6,6 +6,7 @@ class ArrayTests: XCTestCase {
         ("testIntArray", testIntArray),
         ("testStringArray", testStringArray),
         ("testBoolArray", testBoolArray),
+        ("testDateArray", testDateArray),
         ("testBytesArray", testBytesArray),
         ("testUnsupportedObjectArray", testUnsupportedObjectArray),
         ("test2DArray", test2DArray),
@@ -90,6 +91,33 @@ class ArrayTests: XCTestCase {
             XCTAssertEqual(boolArray!.array!.flatMap { $0.bool }, rows[i])
         }
     }
+	
+	func testDateArray() throws {
+		let date  = "2016-10-24 23:04:19.000".postgreSQLParsedDate
+		let date2 = "2017-10-24 23:04:19.000".postgreSQLParsedDate
+		let dateLowValue = Date.init().timestampLowValue
+		let dateHighValue = Date.init().timestampHighValue
+		let rows  = [
+			[date],
+			[date,date2],
+			[dateLowValue,dateHighValue],
+			[],
+			]
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (id serial, date_array TIMESTAMP WITHOUT TIME ZONE[] )")
+		for row in rows {
+			try postgreSQL.execute("INSERT INTO foo VALUES (DEFAULT, $1)", [row.makeNode(in:nil)])
+		}
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo ORDER BY id ASC")
+		XCTAssertEqual(result.count, rows.count)
+		for (i, resultRow) in result.enumerated() {
+			let dateArray = resultRow["date_array"]
+			XCTAssertNotNil(dateArray?.array)
+			XCTAssertEqual(dateArray!.array!.flatMap { $0.date }, rows[i])
+		}
+	}
+
     
     func testBytesArray() throws {
         let rows: [[Node]] = [

@@ -39,9 +39,10 @@ extension Node: Bindable {
             print("Unsupported Node type for PostgreSQL binding, everything except for .object is supported.")
             return (nil, nil, .string)
 
-        default:
-            return (nil, nil, .string)
-        }
+		case .date(let date):
+			return date.postgresBindingData
+		}
+
     }
 }
 
@@ -75,9 +76,12 @@ extension StructuredData {
             print("Unsupported Node array type for PostgreSQL binding, everything except for .object is supported.")
             return "NULL"
 
-        default:
-            return ""
-        }
+		case .date(let date):
+			let formatter = DateFormatter()
+			formatter.timeZone = TimeZone(secondsFromGMT: 0)
+			formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZ G"
+			return formatter.string(from: date)
+		}
     }
 }
 
@@ -133,4 +137,14 @@ extension String: Bindable {
     var postgresBindingData: ([Int8]?, OID?, DataFormat) {
         return (utf8CString.array, .none, .string)
     }
+}
+
+extension Date: Bindable {
+	var postgresBindingData: ([Int8]?, OID?, DataFormat) {
+		let formatter = DateFormatter()
+		formatter.timeZone = TimeZone(secondsFromGMT: 0)
+		formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZ G"
+		let string = formatter.string(from: self)
+		return (string.utf8CString.array, .none, .string)
+	}
 }

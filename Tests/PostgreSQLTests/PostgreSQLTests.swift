@@ -8,7 +8,21 @@ class PostgreSQLTests: XCTestCase {
         ("testTables", testTables),
         ("testParameterization", testParameterization),
         ("testDataType", testDataType),
-        ("testCustomType", testCustomType),
+        ("testDateAsStringTypeWithOutTimeZone", testDateAsStringTypeWithOutTimeZone),
+        ("testDateAsStringTypeWithTimeZone", testDateAsStringTypeWithTimeZone),
+        ("testTimeStampNoTimezoneTypeLowValue", testTimeStampNoTimezoneTypeLowValue),
+        ("testTimeStampNoTimezoneTypeCurrentDate", testTimeStampNoTimezoneTypeCurrentDate),
+        ("testTimeStampNoTimezoneTypeHighValue", testTimeStampNoTimezoneTypeHighValue),
+        ("testTimeStampTimezoneTypeLowValue", testTimeStampTimezoneTypeLowValue),
+        ("testTimeStampTimezoneTypeHighValue", testTimeStampTimezoneTypeHighValue),
+        ("testTimeStampTimezoneType", testTimeStampTimezoneType),
+        ("testDateTypeLowValue", testDateTypeLowValue),
+        ("testDateTypeHighValue", testDateTypeHighValue),
+        ("testDateType", testDateType),
+        ("testTimeTypeHighValue", testTimeTypeHighValue),
+        ("testTimeTypeLowValue", testTimeTypeLowValue),
+        ("testTimeWithTimeZoneTypeHighValue", testTimeWithTimeZoneTypeHighValue),
+        ("testTimeWithTimeZoneTypeLowValue", testTimeWithTimeZoneTypeLowValue),
         ("testInts", testInts),
         ("testFloats", testFloats),
         ("testNumeric", testNumeric),
@@ -159,7 +173,8 @@ class PostgreSQLTests: XCTestCase {
         XCTAssertEqual(resultBytesNode!, .bytes(data))
     }
 
-    func testCustomType() throws {
+    func testDateAsStringTypeWithOutTimeZone() throws {
+		let formatter  = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.timestamp)
         let uuidString = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
         let dateString = "2016-10-24 23:04:19.223"
 
@@ -170,9 +185,234 @@ class PostgreSQLTests: XCTestCase {
         let result = try postgreSQL.execute("SELECT * FROM foo").first
         XCTAssertNotNil(result)
         XCTAssertEqual(result!["uuid"]?.string, uuidString)
-        XCTAssertEqual(result!["date"]?.string, dateString)
+		let resultString = formatter.string(from: (result!["date"]?.date!)!)
+		XCTAssertTrue(resultString.contains(dateString))
     }
+	
+	func testDateAsStringTypeWithTimeZone() throws {
+		let formatter  = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.timestamptz)
+		let uuidString = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let dateString = "2016-10-24 23:04:19.223-04"
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIMESTAMP WITH TIME ZONE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .string(dateString)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		let resultString = formatter.string(from: (result!["date"]?.date!)!)
+		XCTAssertTrue(resultString.contains(dateString))
+	}
 
+
+	func testTimeStampNoTimezoneTypeLowValue() throws {
+		let uuidString = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let date = Date.init().timestampLowValue;
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIMESTAMP WITHOUT TIME ZONE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		XCTAssertEqual(result!["date"]?.date,date)
+	}
+	
+	func testTimeStampNoTimezoneTypeCurrentDate() throws {
+		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.timestamp)
+		let uuidString = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let date = Date.init();
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIMESTAMP WITHOUT TIME ZONE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		
+		let expectedDateIsUTC = formatter.date(from: formatter.string(from: date))
+		XCTAssertEqual(result!["date"]?.date,expectedDateIsUTC)
+	}
+	
+	func testTimeStampNoTimezoneTypeHighValue() throws {
+		let uuidString = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let date = Date.init().timestampHighValue
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIMESTAMP WITHOUT TIME ZONE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		XCTAssertEqual(result!["date"]?.date,date)
+	}
+	
+	func testTimeStampTimezoneTypeLowValue() throws {
+		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let date : Date = Date.init().timestampLowValue
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIMESTAMP WITH TIME ZONE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		XCTAssertEqual(result!["date"]?.date,date)
+	}
+	
+	func testTimeStampTimezoneTypeHighValue() throws {
+		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let date : Date = Date.init().timestampHighValue
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIMESTAMP WITH TIME ZONE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		XCTAssertEqual(result!["date"]?.date,date)
+	}
+	
+	func testTimeStampTimezoneType() throws {
+		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.timestamptz)
+		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let date : Date = Date.init()
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIMESTAMP WITH TIME ZONE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		let expectedDateIsUTC = formatter.date(from: formatter.string(from: date))
+		XCTAssertEqual(result!["date"]?.date,expectedDateIsUTC)
+	}
+	
+	func testDateTypeLowValue() throws {
+		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.date)
+		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let dateString  = formatter.string(from: Date.init().dateLowValue)
+		let date : Date = formatter.date(from: dateString)!
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date DATE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		XCTAssertEqual(result!["date"]?.date,date)
+	}
+	
+	func testDateTypeHighValue() throws {
+		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.date)
+		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let dateString  = formatter.string(from: Date.init().dateHighValue)
+		let date : Date = formatter.date(from: dateString)!
+		
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date DATE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		XCTAssertEqual(result!["date"]?.date,date)
+	}
+	
+	func testDateType() throws {
+		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.date)
+		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let dateString  = formatter.string(from: Date.init())
+		let date : Date = formatter.date(from: dateString)!
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date DATE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		XCTAssertEqual(result!["date"]?.date,date)
+	}
+	
+	func testTimeTypeHighValue() throws {
+		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.time)
+		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let dateString  = "23:59:59.999"
+		let date : Date = formatter.date(from: dateString)!
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIME WITHOUT TIME ZONE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		XCTAssertEqual(result!["date"]?.date,date)
+	}
+	
+	func testTimeTypeLowValue() throws {
+		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.time)
+		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let dateString  = "00:00:00.000"
+		let date : Date = formatter.date(from: dateString)!
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIME WITHOUT TIME ZONE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		let expectedDateIsUTC = formatter.date(from: formatter.string(from: date))
+		XCTAssertEqual(result!["date"]?.date,expectedDateIsUTC)
+		
+	}
+	
+	func testTimeWithTimeZoneTypeHighValue() throws {
+		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.timetz)
+		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let dateString  = "23:59:59.999-1459"
+		let date : Date = formatter.date(from: dateString)!
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIME WITH TIME ZONE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		let expectedDateIsUTC = formatter.date(from: formatter.string(from: date))
+		XCTAssertEqual(result!["date"]?.date,expectedDateIsUTC)
+		
+	}
+	
+	func testTimeWithTimeZoneTypeLowValue() throws {
+		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.timetz)
+		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
+		let dateString  = "00:00:00.000+1459"
+		let date : Date = formatter.date(from: dateString)!
+		
+		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
+		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIME WITH TIME ZONE)")
+		try postgreSQL.execute("INSERT INTO foo VALUES ($1, $2)", [.string(uuidString), .date(date)])
+		
+		let result = try postgreSQL.execute("SELECT * FROM foo").first
+		XCTAssertNotNil(result)
+		XCTAssertEqual(result!["uuid"]?.string, uuidString)
+		let expectedDateIsUTC = formatter.date(from: formatter.string(from: date))
+		XCTAssertEqual(result!["date"]?.date,expectedDateIsUTC)
+	}
+
+	
     func testInts() throws {
         let rows: [(Int16, Int32, Int64)] = [
             (1, 2, 3),

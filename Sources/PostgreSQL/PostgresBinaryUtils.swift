@@ -68,10 +68,10 @@ struct PostgresBinaryUtils {
             return formatter
         }
         
-        private static let timestamp: DateFormatter = formatter(format: "yyyy-MM-dd HH:mm:ss.SSS", forceUTC: true)
-        private static let timestamptz: DateFormatter = formatter(format: "yyyy-MM-dd HH:mm:ss.SSSX", forceUTC: false)
+        private static let timestamp: DateFormatter = formatter(format: "yyyy-MM-dd HH:mm:ss.SSS G", forceUTC: true)
+        private static let timestamptz: DateFormatter = formatter(format: "yyyy-MM-dd HH:mm:ss.SSSZ G", forceUTC: false)
         
-        private static let date: DateFormatter = formatter(format: "yyyy-MM-dd", forceUTC: false)
+        private static let date: DateFormatter = formatter(format: "yyyy-MM-dd G", forceUTC: true)
         
         private static let time: DateFormatter = formatter(format: "HH:mm:ss.SSS", forceUTC: true)
         private static let timetz: DateFormatter = formatter(format: "HH:mm:ss.SSSX", forceUTC: false)
@@ -278,6 +278,11 @@ struct PostgresBinaryUtils {
         }
         return Date(timeInterval: interval, since: TimestampConstants.referenceDate)
     }
+	
+	static func parseDate(value: UnsafeMutablePointer<Int8>) -> Date {
+		let interval = Int(parseInt32(value: value)) * 24 * 60 * 60
+		return Date(timeInterval: TimeInterval(interval), since: TimestampConstants.referenceDate)
+	}
     
     // MARK: - Interval
     

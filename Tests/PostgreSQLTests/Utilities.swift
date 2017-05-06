@@ -82,3 +82,58 @@ extension Float64 {
     static let min = Float64(bitPattern: 0x0010000000000000)
     static let max = Float64(bitPattern: 0x7fefffffffffffff)
 }
+
+extension Date {
+	var timestampLowValue: Date {
+		let userCalendar = Calendar.init(identifier: Calendar.Identifier.gregorian)
+		var dateComponents = DateComponents()
+		dateComponents.era = 0
+		dateComponents.year = 4713
+		dateComponents.month = 1
+		dateComponents.day = 1
+		dateComponents.hour = 0
+		dateComponents.minute = 0
+		dateComponents.second = 0
+		dateComponents.timeZone = TimeZone(abbreviation: "UTC")
+		
+		return userCalendar.date(from: dateComponents)!
+	}
+	
+	var timestampHighValue: Date {
+		let userCalendar = Calendar.init(identifier: Calendar.Identifier.gregorian)
+		var dateComponents = DateComponents()
+		dateComponents.era = 1
+		dateComponents.year = 144683  //Highest number the formatter would allow; Postgres can go to 294276
+		dateComponents.month = 1
+		dateComponents.day = 1
+		dateComponents.hour = 0
+		dateComponents.minute = 0
+		dateComponents.second = 0
+		dateComponents.timeZone = TimeZone(abbreviation: "UTC")
+		
+		return userCalendar.date(from: dateComponents)!
+	}
+	
+	var dateLowValue: Date {
+		let userCalendar = Calendar.init(identifier: Calendar.Identifier.gregorian)
+		var dateComponents = DateComponents()
+		dateComponents.era = 0
+		dateComponents.year = 4713
+		dateComponents.month = 1
+		dateComponents.day = 1
+		
+		return userCalendar.date(from: dateComponents)!
+	}
+	
+	var dateHighValue: Date {
+		let userCalendar = Calendar.init(identifier: Calendar.Identifier.gregorian)
+		var dateComponents = DateComponents()
+		dateComponents.era = 1
+		dateComponents.year = 144683  //Highest number the formatter would allow; Postgres can go to 5874897
+		dateComponents.month = 1
+		dateComponents.day = 1
+		
+		return userCalendar.date(from: dateComponents)!
+	}
+	
+}

@@ -168,12 +168,17 @@ extension Node {
             let uuid = PostgresBinaryUtils.parseUUID(value: value)
             self = .string(uuid)
             
-        case .timestamp, .timestamptz, .date, .time, .timetz:
+        case .timestamp, .timestamptz, .time, .timetz:
             let date = PostgresBinaryUtils.parseTimetamp(value: value, isInteger: configuration.hasIntegerDatetimes)
             let formatter = PostgresBinaryUtils.Formatters.dateFormatter(for: oid)
             let timestamp = formatter.string(from: date)
-            self = .string(timestamp)
-            
+			let formattedDate : Date = formatter.date(from: timestamp)!
+			self = .date(formattedDate)
+			
+		case .date:
+			let date = PostgresBinaryUtils.parseDate(value: value)
+			self = .date(date)
+			
         case .interval:
             let interval = PostgresBinaryUtils.parseInterval(value: value, timeIsInteger: configuration.hasIntegerDatetimes)
             self = .string(interval)
