@@ -10,19 +10,19 @@ class PostgreSQLTests: XCTestCase {
         ("testDataType", testDataType),
         ("testDateAsStringTypeWithOutTimeZone", testDateAsStringTypeWithOutTimeZone),
         ("testDateAsStringTypeWithTimeZone", testDateAsStringTypeWithTimeZone),
-        ("testTimeStampNoTimezoneTypeLowValue", testTimeStampNoTimezoneTypeLowValue),
+        ("testTimeStampNoTimezoneTypeMinimumValue", testTimeStampNoTimezoneTypeMinimumValue),
         ("testTimeStampNoTimezoneTypeCurrentDate", testTimeStampNoTimezoneTypeCurrentDate),
-        ("testTimeStampNoTimezoneTypeHighValue", testTimeStampNoTimezoneTypeHighValue),
-        ("testTimeStampTimezoneTypeLowValue", testTimeStampTimezoneTypeLowValue),
-        ("testTimeStampTimezoneTypeHighValue", testTimeStampTimezoneTypeHighValue),
+        ("testTimeStampNoTimezoneTypeMaximumValue", testTimeStampNoTimezoneTypeMaximumValue),
+        ("testTimeStampTimezoneTypeMinimumValue", testTimeStampTimezoneTypeMinimumValue),
+        ("testTimeStampTimezoneTypeMaximumValue", testTimeStampTimezoneTypeMaximumValue),
         ("testTimeStampTimezoneType", testTimeStampTimezoneType),
-        ("testDateTypeLowValue", testDateTypeLowValue),
-        ("testDateTypeHighValue", testDateTypeHighValue),
+        ("testDateTypeMinimumValue", testDateTypeMinimumValue),
+        ("testDateTypeMaximumValue", testDateTypeMaximumValue),
         ("testDateType", testDateType),
-        ("testTimeTypeHighValue", testTimeTypeHighValue),
-        ("testTimeTypeLowValue", testTimeTypeLowValue),
-        ("testTimeWithTimeZoneTypeHighValue", testTimeWithTimeZoneTypeHighValue),
-        ("testTimeWithTimeZoneTypeLowValue", testTimeWithTimeZoneTypeLowValue),
+        ("testTimeTypeMaximumValue", testTimeTypeMaximumValue),
+        ("testTimeTypeMinimumValue", testTimeTypeMinimumValue),
+        ("testTimeWithTimeZoneTypeMaximumValue", testTimeWithTimeZoneTypeMaximumValue),
+        ("testTimeWithTimeZoneTypeMinimumValue", testTimeWithTimeZoneTypeMinimumValue),
         ("testInts", testInts),
         ("testFloats", testFloats),
         ("testNumeric", testNumeric),
@@ -206,7 +206,7 @@ class PostgreSQLTests: XCTestCase {
 	}
 
 
-	func testTimeStampNoTimezoneTypeLowValue() throws {
+	func testTimeStampNoTimezoneTypeMinimumValue() throws {
 		let uuidString = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
 		let date = Date.init().timestampMinimumValue;
 		
@@ -237,7 +237,7 @@ class PostgreSQLTests: XCTestCase {
 		XCTAssertEqual(result!["date"]?.date,expectedDateIsUTC)
 	}
 	
-	func testTimeStampNoTimezoneTypeHighValue() throws {
+	func testTimeStampNoTimezoneTypeMaximumValue() throws {
 		let uuidString = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
 		let date = Date.init().timestampMaximumValue
 		
@@ -251,7 +251,7 @@ class PostgreSQLTests: XCTestCase {
 		XCTAssertEqual(result!["date"]?.date,date)
 	}
 	
-	func testTimeStampTimezoneTypeLowValue() throws {
+	func testTimeStampTimezoneTypeMinimumValue() throws {
 		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
 		let date : Date = Date.init().timestampMinimumValue
 		
@@ -265,7 +265,7 @@ class PostgreSQLTests: XCTestCase {
 		XCTAssertEqual(result!["date"]?.date,date)
 	}
 	
-	func testTimeStampTimezoneTypeHighValue() throws {
+	func testTimeStampTimezoneTypeMaximumValue() throws {
 		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
 		let date : Date = Date.init().timestampMaximumValue
 		
@@ -295,7 +295,7 @@ class PostgreSQLTests: XCTestCase {
 		XCTAssertEqual(result!["date"]?.date,expectedDateIsUTC)
 	}
 	
-	func testDateTypeLowValue() throws {
+	func testDateTypeMinimumValue() throws {
 		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.date)
 		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
 		let dateString  = formatter.string(from: Date.init().dateMinimumValue)
@@ -311,7 +311,7 @@ class PostgreSQLTests: XCTestCase {
 		XCTAssertEqual(result!["date"]?.date,date)
 	}
 	
-	func testDateTypeHighValue() throws {
+	func testDateTypeMaximumValue() throws {
 		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.date)
 		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
 		let dateString  = formatter.string(from: Date.init().dateMaximumValue)
@@ -344,7 +344,7 @@ class PostgreSQLTests: XCTestCase {
 		XCTAssertEqual(result!["date"]?.date,date)
 	}
 	
-	func testTimeTypeHighValue() throws {
+	func testTimeTypeMaximumValue() throws {
 		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.time)
 		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
 		let dateString  = "23:59:59.999"
@@ -360,7 +360,7 @@ class PostgreSQLTests: XCTestCase {
 		XCTAssertEqual(result!["date"]?.date,date)
 	}
 	
-	func testTimeTypeLowValue() throws {
+	func testTimeTypeMinimumValue() throws {
 		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.time)
 		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
 		let dateString  = "00:00:00.000"
@@ -378,7 +378,7 @@ class PostgreSQLTests: XCTestCase {
 		
 	}
 	
-	func testTimeWithTimeZoneTypeHighValue() throws {
+	func testTimeWithTimeZoneTypeMaximumValue() throws {
 		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.timetz)
 		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
 		let dateString  = "23:59:59.999-1459"
@@ -395,7 +395,7 @@ class PostgreSQLTests: XCTestCase {
 		
 	}
 	
-	func testTimeWithTimeZoneTypeLowValue() throws {
+	func testTimeWithTimeZoneTypeMinimumValue() throws {
 		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.timetz)
 		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
 		let dateString  = "00:00:00.000+1459"
