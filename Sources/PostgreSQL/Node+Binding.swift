@@ -1,6 +1,9 @@
 import Foundation
 import Core
 
+let dateFormatter = DateFormatter()
+
+
 protocol Bindable {
     var postgresBindingData: ([Int8]?, OID?, DataFormat) { get }
 }
@@ -77,10 +80,9 @@ extension StructuredData {
             return "NULL"
 
 		case .date(let date):
-			let formatter = DateFormatter()
-			formatter.timeZone = TimeZone(secondsFromGMT: 0)
-			formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZ G"
-			return formatter.string(from: date)
+			dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+			dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZ G"
+			return dateFormatter.string(from: date)
 		}
     }
 }
@@ -141,10 +143,9 @@ extension String: Bindable {
 
 extension Date: Bindable {
 	var postgresBindingData: ([Int8]?, OID?, DataFormat) {
-		let formatter = DateFormatter()
-		formatter.timeZone = TimeZone(secondsFromGMT: 0)
-		formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZ G"
-		let string = formatter.string(from: self)
+		dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+		dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZ G"
+		let string = dateFormatter.string(from: self)
 		return (string.utf8CString.array, .none, .string)
 	}
 }
