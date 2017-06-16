@@ -84,7 +84,7 @@ extension Float64 {
 }
 
 extension Date {
-	var timestampLowValue: Date {
+	var timestampMinimumValue: Date {
 		let userCalendar = Calendar.init(identifier: Calendar.Identifier.gregorian)
 		var dateComponents = DateComponents()
 		dateComponents.era = 0
@@ -99,7 +99,7 @@ extension Date {
 		return userCalendar.date(from: dateComponents)!
 	}
 	
-	var timestampHighValue: Date {
+	var timestampMaximumValue: Date {
 		let userCalendar = Calendar.init(identifier: Calendar.Identifier.gregorian)
 		var dateComponents = DateComponents()
 		dateComponents.era = 1
@@ -114,7 +114,7 @@ extension Date {
 		return userCalendar.date(from: dateComponents)!
 	}
 	
-	var dateLowValue: Date {
+	var dateMinimumValue: Date {
 		let userCalendar = Calendar.init(identifier: Calendar.Identifier.gregorian)
 		var dateComponents = DateComponents()
 		dateComponents.era = 0
@@ -125,7 +125,7 @@ extension Date {
 		return userCalendar.date(from: dateComponents)!
 	}
 	
-	var dateHighValue: Date {
+	var dateMaximumValue: Date {
 		let userCalendar = Calendar.init(identifier: Calendar.Identifier.gregorian)
 		var dateComponents = DateComponents()
 		dateComponents.era = 1

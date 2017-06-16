@@ -208,7 +208,7 @@ class PostgreSQLTests: XCTestCase {
 
 	func testTimeStampNoTimezoneTypeLowValue() throws {
 		let uuidString = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
-		let date = Date.init().timestampLowValue;
+		let date = Date.init().timestampMinimumValue;
 		
 		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
 		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIMESTAMP WITHOUT TIME ZONE)")
@@ -239,7 +239,7 @@ class PostgreSQLTests: XCTestCase {
 	
 	func testTimeStampNoTimezoneTypeHighValue() throws {
 		let uuidString = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
-		let date = Date.init().timestampHighValue
+		let date = Date.init().timestampMaximumValue
 		
 		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
 		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIMESTAMP WITHOUT TIME ZONE)")
@@ -253,7 +253,7 @@ class PostgreSQLTests: XCTestCase {
 	
 	func testTimeStampTimezoneTypeLowValue() throws {
 		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
-		let date : Date = Date.init().timestampLowValue
+		let date : Date = Date.init().timestampMinimumValue
 		
 		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
 		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIMESTAMP WITH TIME ZONE)")
@@ -267,7 +267,7 @@ class PostgreSQLTests: XCTestCase {
 	
 	func testTimeStampTimezoneTypeHighValue() throws {
 		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
-		let date : Date = Date.init().timestampHighValue
+		let date : Date = Date.init().timestampMaximumValue
 		
 		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
 		try postgreSQL.execute("CREATE TABLE foo (uuid UUID, date TIMESTAMP WITH TIME ZONE)")
@@ -298,7 +298,7 @@ class PostgreSQLTests: XCTestCase {
 	func testDateTypeLowValue() throws {
 		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.date)
 		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
-		let dateString  = formatter.string(from: Date.init().dateLowValue)
+		let dateString  = formatter.string(from: Date.init().dateMinimumValue)
 		let date : Date = formatter.date(from: dateString)!
 		
 		try postgreSQL.execute("DROP TABLE IF EXISTS foo")
@@ -314,7 +314,7 @@ class PostgreSQLTests: XCTestCase {
 	func testDateTypeHighValue() throws {
 		let formatter   = PostgresBinaryUtils.Formatters.dateFormatter(for: OID.date)
 		let uuidString  = "7fe1743a-96a8-417c-b6c2-c8bb20d3017e"
-		let dateString  = formatter.string(from: Date.init().dateHighValue)
+		let dateString  = formatter.string(from: Date.init().dateMaximumValue)
 		let date : Date = formatter.date(from: dateString)!
 		
 		

@@ -95,8 +95,8 @@ class ArrayTests: XCTestCase {
 	func testDateArray() throws {
 		let date  = "2016-10-24 23:04:19.000".postgreSQLParsedDate
 		let date2 = "2017-10-24 23:04:19.000".postgreSQLParsedDate
-		let dateLowValue = Date.init().timestampLowValue
-		let dateHighValue = Date.init().timestampHighValue
+		let dateLowValue = Date.init().timestampMinimumValue
+		let dateHighValue = Date.init().timestampMaximumValue
 		let rows  = [
 			[date],
 			[date,date2],
