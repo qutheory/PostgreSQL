@@ -1,6 +1,10 @@
 import Foundation
 import Core
 
+let hoursInDay = 24;
+let minutesInHour = 60;
+let secondsInMinutes = 60;
+
 extension UInt8 {
     var lowercaseHexPair: String {
         let hexString = String(self, radix: 16, uppercase: false)
@@ -280,7 +284,7 @@ struct PostgresBinaryUtils {
     }
 	
 	static func parseDate(value: UnsafeMutablePointer<Int8>) -> Date {
-		let interval = Int(parseInt32(value: value)) * 24 * 60 * 60
+		let interval = Int(parseInt32(value: value)) * hoursInDay * minutesInHour * secondsInMinutes
 		return Date(timeInterval: TimeInterval(interval), since: TimestampConstants.referenceDate)
 	}
     
