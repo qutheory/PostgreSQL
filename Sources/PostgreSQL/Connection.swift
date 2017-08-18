@@ -152,6 +152,15 @@ public final class Connection: ConnInfoInitializable {
         public let channel: String
         public let payload: String?
         
+        /// initializer usable without knowledge of CPostgreSQL
+        /// required to allow unit testing of classes using Notifications
+        public init(pid: Int, channel: String, payload: String?) {
+            self.pid = pid
+            self.channel = channel
+            self.payload = payload
+        }
+        
+        /// internal initializer
         init(pgNotify: PGnotify) {
             channel = String(cString: pgNotify.relname)
             pid = Int(pgNotify.be_pid)

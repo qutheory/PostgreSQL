@@ -30,6 +30,8 @@ class PostgreSQLTests: XCTestCase {
         ("testUnsupportedObject", testUnsupportedObject),
         ("testNotification", testNotification),
         ("testNotificationWithPayload", testNotificationWithPayload),
+        ("testDispatchNotification", testDispatchNotification),
+        ("testDispatchNotificationWithPayload", testDispatchNotificationWithPayload),
         ("testQueryToNode", testQueryToNode)
     ]
 
