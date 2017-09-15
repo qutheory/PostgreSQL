@@ -837,9 +837,9 @@ class PostgreSQLTests: XCTestCase {
 		let queue = DispatchQueue.global()
 		var source: DispatchSourceRead?
 		source = try! conn1.makeListenDispatchSource(toChannel: "test_channel2", queue: queue) { (notification, error) in
-			XCTAssertEqual(notification?.channel, "test_channel1")
+			XCTAssertEqual(notification?.channel, "test_channel2")
 			XCTAssertEqual(notification?.payload, "test_payload")
-			XCTAssertNil(notification?.payload)
+			XCTAssertNotNil(notification?.payload)
 			XCTAssertNil(error)
 			
 			testExpectation.fulfill()
