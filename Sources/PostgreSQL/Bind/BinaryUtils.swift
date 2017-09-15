@@ -306,9 +306,16 @@ struct BinaryUtils {
                 digitIndex += 1
             }
             
-            let endIndex = string.index(decimalIndex, offsetBy: dscale + 1)
-            string = string.substring(to: endIndex)
-            return string
+            #if swift(>=3.2)
+                let maxOffset = string.distance(from: decimalIndex, to: string.endIndex)
+                let offset = min(maxOffset, dscale)
+                let endIndex = string.index(decimalIndex, offsetBy: offset)
+                
+                return String(string[..<endIndex])
+            #else
+                let endIndex = string.index(decimalIndex, offsetBy: dscale + 1)
+                return string.substring(to: endIndex)
+            #endif
         }
     }
     
@@ -552,6 +559,11 @@ struct BinaryUtils {
             .joined()
         
         // Limit the bitString to the bitLength
-        return bitString.substring(to: bitString.index(bitString.startIndex, offsetBy: Int(bitLength)))
+        let toIndex = bitString.index(bitString.startIndex, offsetBy: Int(bitLength))
+        #if swift(>=4.0)
+            return String(bitString[..<toIndex])
+        #else
+            return bitString.substring(to: toIndex)
+        #endif
     }
 }

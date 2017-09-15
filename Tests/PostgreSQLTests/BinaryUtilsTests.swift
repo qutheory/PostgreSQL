@@ -216,7 +216,12 @@ class BinaryUtilsTests: XCTestCase {
         for (hexString, timestamp) in integerTimestampTests {
             var bytes = hexString.hexStringBytes
             let parsedDate = BinaryUtils.parseTimetamp(value: &bytes, isInteger: true)
-            XCTAssertEqualWithAccuracy(timestamp.timeIntervalSince1970, parsedDate.timeIntervalSince1970, accuracy: 0.001)
+            
+            #if swift(>=3.2)
+                XCTAssertEqual(timestamp.timeIntervalSince1970, parsedDate.timeIntervalSince1970, accuracy: 0.001)
+            #else
+                XCTAssertEqualWithAccuracy(timestamp.timeIntervalSince1970, parsedDate.timeIntervalSince1970, accuracy: 0.001)
+            #endif
         }
     }
     
@@ -231,7 +236,12 @@ class BinaryUtilsTests: XCTestCase {
         for (hexString, timestamp) in floatTimestampTests {
             var bytes = hexString.hexStringBytes
             let parsedDate = BinaryUtils.parseTimetamp(value: &bytes, isInteger: false)
-            XCTAssertEqualWithAccuracy(timestamp.timeIntervalSince1970, parsedDate.timeIntervalSince1970, accuracy: 0.001)
+            
+            #if swift(>=3.2)
+                XCTAssertEqual(timestamp.timeIntervalSince1970, parsedDate.timeIntervalSince1970, accuracy: 0.001)
+            #else
+                XCTAssertEqualWithAccuracy(timestamp.timeIntervalSince1970, parsedDate.timeIntervalSince1970, accuracy: 0.001)
+            #endif
         }
     }
     

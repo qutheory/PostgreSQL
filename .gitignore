@@ -5,4 +5,4 @@ Packages
 Database
 *.xcodeproj
 Package.pins
-
+Package.resolved
