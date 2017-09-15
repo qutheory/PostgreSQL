@@ -1,6 +1,7 @@
 import XCTest
 @testable import PostgreSQL
 import Foundation
+import Dispatch
 
 class PostgreSQLTests: XCTestCase {
     static let allTests = [
