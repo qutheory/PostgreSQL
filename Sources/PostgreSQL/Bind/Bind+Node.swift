@@ -25,7 +25,7 @@ extension Bind {
         case .array(let supportedArrayType):
             return Bind.parse(type: supportedArrayType, configuration: configuration, value: value, length: length)
             
-        case .unsupported(let oid):
+        case .unsupported(_):
             // Unsupported Oid type for PostgreSQL binding.
             
             // Fallback to simply passing on the bytes
