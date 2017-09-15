@@ -152,6 +152,15 @@ public final class Connection: ConnInfoInitializable {
         public let channel: String
         public let payload: String?
         
+        /// initializer usable without knowledge of CPostgreSQL
+        /// required to allow unit testing of classes using Notifications
+        public init(pid: Int, channel: String, payload: String?) {
+            self.pid = pid
+            self.channel = channel
+            self.payload = payload
+        }
+        
+        /// internal initializer
         init(pgNotify: PGnotify) {
             channel = String(cString: pgNotify.relname)
             pid = Int(pgNotify.be_pid)
@@ -169,6 +178,37 @@ public final class Connection: ConnInfoInitializable {
                 payload = nil
             }
         }
+    }
+    
+    /// Creates a dispatch read source for this connection that will call `callback` on `queue` when a notification is received
+    ///
+    /// - Parameter channel: the channel to register for
+    /// - Parameter queue: the queue to create the DispatchSource on
+    /// - Parameter callback: the callback
+    /// - Parameter note: The notification received from the database
+    /// - Parameter err: Any error while reading the notification. If not nil, the source will have been canceled
+    /// - Returns: the dispatch socket to activate
+    /// - Throws: if fails to get the socket for the connection
+    public func makeListenDispatchSource(toChannel channel: String, queue: DispatchQueue, callback: @escaping (_ note: Notification?, _ err: Error?) -> Void) throws -> DispatchSourceRead {
+        guard let sock = Optional.some(PQsocket(self.cConnection)), sock >= 0
+            else { throw PostgreSQLError(code: .ioError, reason: "failed to get socket for connection") }
+        let src = DispatchSource.makeReadSource(fileDescriptor: sock, queue: queue)
+        src.setEventHandler { [unowned self] in
+            do {
+                try self.validateConnection()
+                PQconsumeInput(self.cConnection)
+                while let pgNotify = PQnotifies(self.cConnection) {
+                    let notification = Notification(pgNotify: pgNotify.pointee)
+                    callback(notification, nil)
+                    PQfreemem(pgNotify)
+                }
+            } catch {
+                callback(nil, error)
+                src.cancel()
+            }
+        }
+        try self.execute("LISTEN \(channel)")
+        return src
     }
     
     /// Registers as a listener on a specific notification channel.

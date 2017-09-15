@@ -30,6 +30,8 @@ class PostgreSQLTests: XCTestCase {
         ("testUnsupportedObject", testUnsupportedObject),
         ("testNotification", testNotification),
         ("testNotificationWithPayload", testNotificationWithPayload),
+        ("testDispatchNotification", testDispatchNotification),
+        ("testDispatchNotificationWithPayload", testDispatchNotificationWithPayload),
         ("testQueryToNode", testQueryToNode)
     ]
 
@@ -779,6 +781,31 @@ class PostgreSQLTests: XCTestCase {
         waitForExpectations(timeout: 5)
     }
 
+	func testDispatchNotification() throws {
+		let conn1 = try postgreSQL.makeConnection()
+		let conn2 = try postgreSQL.makeConnection()
+		
+		let testExpectation = expectation(description: "Receive notification")
+		
+		let queue = DispatchQueue.global()
+		var source: DispatchSourceRead?
+		source = try! conn1.makeListenDispatchSource(toChannel: "test_channel1", queue: queue) { (notification, error) in
+			XCTAssertEqual(notification?.channel, "test_channel1")
+			XCTAssertNil(notification?.payload)
+			XCTAssertNil(error)
+			
+			testExpectation.fulfill()
+			source?.cancel()
+		}
+		source?.resume()
+		
+		sleep(1)
+		
+		try conn2.notify(channel: "test_channel1", payload: nil)
+		
+		waitForExpectations(timeout: 5)
+	}
+
     func testNotificationWithPayload() throws {
         let conn1 = try postgreSQL.makeConnection()
         let conn2 = try postgreSQL.makeConnection()
@@ -800,6 +827,32 @@ class PostgreSQLTests: XCTestCase {
 
         waitForExpectations(timeout: 5)
     }
+
+	func testDispatchNotificationWithPayload() throws {
+		let conn1 = try postgreSQL.makeConnection()
+		let conn2 = try postgreSQL.makeConnection()
+		
+		let testExpectation = expectation(description: "Receive notification with payload")
+		
+		let queue = DispatchQueue.global()
+		var source: DispatchSourceRead?
+		source = try! conn1.makeListenDispatchSource(toChannel: "test_channel2", queue: queue) { (notification, error) in
+			XCTAssertEqual(notification?.channel, "test_channel2")
+			XCTAssertEqual(notification?.payload, "test_payload")
+			XCTAssertNotNil(notification?.payload)
+			XCTAssertNil(error)
+			
+			testExpectation.fulfill()
+			source?.cancel()
+		}
+		source?.resume()
+		
+		sleep(1)
+		
+		try conn2.notify(channel: "test_channel2", payload: "test_payload")
+		
+		waitForExpectations(timeout: 5)
+	}
 
     func testQueryToNode() throws {
         let conn = try postgreSQL.makeConnection()
