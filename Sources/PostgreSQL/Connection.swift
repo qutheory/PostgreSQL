@@ -181,15 +181,18 @@ public final class Connection: ConnInfoInitializable {
     /// - Parameter error: Any error while reading the notification. If not nil, the source will have been canceled
     /// - Returns: the dispatch socket to activate
     /// - Throws: if fails to get the socket for the connection
-        guard let sock = Optional.some(PQsocket(self.cConnection)), sock >= 0
-            else { throw PostgreSQLError(code: .ioError, reason: "failed to get socket for connection") }
     public func listen(toChannel channel: String, queue: DispatchQueue, callback: @escaping (_ notification: Notification?, _ error: Error?) -> Void) throws -> DispatchSourceRead {
+        let sock = PQsocket(self.cConnection)
+		guard sock >= 0 else {
+            throw PostgreSQLError(code: .ioError, reason: "failed to get socket for connection")
+		}
         let src = DispatchSource.makeReadSource(fileDescriptor: sock, queue: queue)
-        src.setEventHandler { [unowned self] in
+        src.setEventHandler { [weak self] in
+			guard let strongSelf = self else { return }
             do {
-                try self.validateConnection()
-                PQconsumeInput(self.cConnection)
-                while let pgNotify = PQnotifies(self.cConnection) {
+                try strongSelf.validateConnection()
+                PQconsumeInput(strongSelf.cConnection)
+                while let pgNotify = PQnotifies(strongSelf.cConnection) {
                     let notification = Notification(pgNotify: pgNotify.pointee)
                     callback(notification, nil)
                     PQfreemem(pgNotify)
