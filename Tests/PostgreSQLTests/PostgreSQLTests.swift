@@ -32,6 +32,7 @@ class PostgreSQLTests: XCTestCase {
         ("testNotification", testNotification),
         ("testNotificationWithPayload", testNotificationWithPayload),
         ("testDispatchNotification", testDispatchNotification),
+        ("testDispatchNotificationInvalidConnection", testDispatchNotificationInvalidConnection),
         ("testDispatchNotificationWithPayload", testDispatchNotificationWithPayload),
         ("testQueryToNode", testQueryToNode)
     ]
@@ -806,7 +807,21 @@ class PostgreSQLTests: XCTestCase {
 		
 		waitForExpectations(timeout: 5)
 	}
-
+	
+    func testDispatchNotificationInvalidConnection() throws {
+        let conn1 = try postgreSQL.makeConnection()
+        conn1.close()
+        do {
+            _ = try conn1.listen(toChannel: "test_channel1", queue: .global()) { (notification, error) in
+                XCTFail("callback should never be called")
+            }
+            XCTFail("exception should have been thrown because connection was not open")
+        } catch {
+            guard let pgerror = error as? PostgreSQLError else { XCTFail("incorrect error type"); return }
+            XCTAssertEqual(pgerror.code, .ioError)
+        }
+    }
+	
     func testNotificationWithPayload() throws {
         let conn1 = try postgreSQL.makeConnection()
         let conn2 = try postgreSQL.makeConnection()

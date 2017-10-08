@@ -18,11 +18,12 @@ class ConnectionTests: XCTestCase {
         let conn = try postgreSQL.makeConnection()
 
         let connection = try postgreSQL.makeConnection()
-        XCTAssert(conn.status == CONNECTION_OK)
+		let status = conn.status
+        XCTAssert(status == CONNECTION_OK)
         XCTAssertTrue(connection.isConnected)
 
         try connection.reset()
-        try connection.close()
+        connection.close()
         XCTAssertFalse(connection.isConnected)
     }
 
