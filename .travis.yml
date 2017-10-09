@@ -3,8 +3,10 @@ matrix:
   include:
     - os: osx
       osx_image: xcode8.3
+      env: SCHEME="PostgreSQL"
     - os: osx
       osx_image: xcode9
+      env: SCHEME="PostgreSQL-Package"
 
 before_install:
   - gem install xcpretty
@@ -23,7 +25,7 @@ script:
   # run unit tests
   - swift build --configuration release
   - swift package generate-xcodeproj
-  - xcodebuild -scheme PostgreSQL -enableCodeCoverage YES test | xcpretty  # instead of swift test
+  - xcodebuild -scheme $SCHEME -enableCodeCoverage YES test | xcpretty  # instead of swift test
 
 
 after_success:

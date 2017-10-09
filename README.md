@@ -1,14 +1,21 @@
+[![Swift](https://img.shields.io/badge/swift-3.1_--_4.0-brightgreen.svg)](https://swift.org)
+[![Linux Build Status](https://img.shields.io/circleci/project/github/vapor-community/postgresql.svg?label=Linux)](https://circleci.com/gh/vapor-community/postgresql)
+[![macOS Build Status](https://img.shields.io/travis/vapor-community/postgresql.svg?label=macOS)](https://travis-ci.org/vapor-community/postgresql)
+[![codecov](https://codecov.io/gh/vapor-community/postgresql/branch/master/graph/badge.svg)](https://codecov.io/gh/vapor-community/postgresql)
+[![GitHub license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+
 # PostgreSQL for Swift
 
-[![Swift](http://img.shields.io/badge/swift-3.1-brightgreen.svg)](https://swift.org)
-[![Build Status](https://travis-ci.org/vapor-community/postgresql.svg?branch=master)](https://travis-ci.org/vapor-community/postgresql)
+## Prerequisites
 
+The PostgreSQL C driver must be installed in order to use this package.  
+Follow the [README of the cpostgresql repo](https://github.com/vapor-community/cpostgresql/blob/master/README.md) to get started.
 
-# Using PostgreSQL
+## Using PostgreSQL
 
 This section outlines how to import the PostgreSQL package both with or without a Vapor project.
 
-## With Vapor
+### With Vapor
 
 The easiest way to use PostgreSQL with Vapor is to include the PostgreSQL provider.
 
@@ -29,7 +36,7 @@ The PostgreSQL provider package adds PostgreSQL to your project and adds some ad
 
 Using `import PostgreSQLProvider` will import both Fluent and Fluent's Vapor-specific APIs.
 
-## With Fluent
+### With Fluent
 
 Fluent is a powerful, pure-Swift ORM that can be used with any Server-Side Swift framework. The PostgreSQL driver allows you to use a PostgreSQL database to power your models and queries.
 
@@ -49,7 +56,7 @@ let package = Package(
 
 Use `import PostgreSQLDriver` to access the `PostgreSQLDriver` class which you can use to initialize a Fluent `Database`.
 
-## Just PostgreSQL
+### Just PostgreSQL
 
 At the core of the PostgreSQL provider and PostgreSQL driver is a Swift wrapper around the C PostgreSQL client. This package can be used by itself to send raw, parameterized queries to your PostgreSQL database.
 
