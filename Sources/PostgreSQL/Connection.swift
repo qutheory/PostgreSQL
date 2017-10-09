@@ -96,7 +96,7 @@ public final class Connection: ConnInfoInitializable {
         return PQstatus(pgConnection)
     }
     
-    private func validateConnection() throws {
+    func validateConnection() throws {
         guard pgConnection != nil else {
             throw PostgreSQLError(code: .connectionDoesNotExist, connection: self)
         }
