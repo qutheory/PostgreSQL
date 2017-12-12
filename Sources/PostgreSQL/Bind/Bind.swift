@@ -2,7 +2,23 @@ import Foundation
 import Core
 
 public final class Bind {
-    
+    private class SmartPointer {
+        let bytes: UnsafeMutablePointer<Int8>
+        let length: Int
+        let ownsMemory: Bool
+        init(bytes: UnsafeMutablePointer<Int8>, length: Int, ownsMemory: Bool) {
+            self.bytes = bytes
+            self.length = length
+            self.ownsMemory = ownsMemory
+        }
+
+        deinit {
+            if ownsMemory {
+                bytes.deallocate(capacity: length)
+            }
+        }
+    }
+
     // MARK: - Enums
     
     public enum Format : Int32 {
@@ -12,8 +28,18 @@ public final class Bind {
     
     // MARK: - Properties
     
-    public let bytes: UnsafeMutablePointer<Int8>?
-    public let length: Int
+    public var bytes: UnsafeMutablePointer<Int8>? {
+        get {
+            return buffer?.bytes
+        }
+    }
+    public var length: Int {
+        get {
+            return buffer?.length ?? 0
+        }
+    }
+
+    private let buffer: SmartPointer?
     
     public let type: FieldType
     public let format: Format
@@ -31,10 +57,9 @@ public final class Bind {
      */
     public init(configuration: Configuration) {
         self.configuration = configuration
-        
-        bytes = nil
-        length = 0
-        
+
+        buffer = nil
+
         type = nil
         format = .string
         
@@ -53,7 +78,7 @@ public final class Bind {
             bytes[i] = char
         }
         
-        self.init(bytes: bytes, length: count, type: nil, format: .string, configuration: configuration)
+        self.init(bytes: bytes, length: count, ownsMemory: true, type: nil, format: .string, configuration: configuration)
     }
     
     /**
@@ -63,7 +88,7 @@ public final class Bind {
         let bytes = UnsafeMutablePointer<Int8>.allocate(capacity: 1)
         bytes.initialize(to: bool ? 1 : 0)
         
-        self.init(bytes: bytes, length: 1, type: FieldType(.bool), format: .binary, configuration: configuration)
+        self.init(bytes: bytes, length: 1, ownsMemory: true, type: FieldType(.bool), format: .binary, configuration: configuration)
     }
     
     /**
@@ -88,7 +113,7 @@ public final class Bind {
         
         var value = int.bigEndian
         let (bytes, length) = BinaryUtils.valueToBytes(&value)
-        self.init(bytes: bytes, length: length, type: type, format: .binary, configuration: configuration)
+        self.init(bytes: bytes, length: length, ownsMemory: true, type: type, format: .binary, configuration: configuration)
     }
     
     /**
@@ -126,7 +151,7 @@ public final class Bind {
         
         var value = double.bigEndian
         let (bytes, length) = BinaryUtils.valueToBytes(&value)
-        self.init(bytes: bytes, length: length, type: type, format: .binary, configuration: configuration)
+        self.init(bytes: bytes, length: length, ownsMemory: true, type: type, format: .binary, configuration: configuration)
     }
 
     /**
@@ -138,7 +163,7 @@ public final class Bind {
             int8Bytes[i] = Int8(bitPattern: byte)
         }
         
-        self.init(bytes: int8Bytes, length: bytes.count, type: nil, format: .binary, configuration: configuration)
+        self.init(bytes: int8Bytes, length: bytes.count, ownsMemory: true, type: nil, format: .binary, configuration: configuration)
     }
 
     /**
@@ -151,13 +176,13 @@ public final class Bind {
             let microseconds = Int64(interval * 1_000_000)
             var value = microseconds.bigEndian
             let (bytes, length) = BinaryUtils.valueToBytes(&value)
-            self.init(bytes: bytes, length: length, type: FieldType(.timestamptz), format: .binary, configuration: configuration)
+            self.init(bytes: bytes, length: length, ownsMemory: true, type: FieldType(.timestamptz), format: .binary, configuration: configuration)
         }
         else {
             let seconds = Float64(interval)
             var value = seconds.bigEndian
             let (bytes, length) = BinaryUtils.valueToBytes(&value)
-            self.init(bytes: bytes, length: length, type: FieldType(.timestamptz), format: .binary, configuration: configuration)
+            self.init(bytes: bytes, length: length, ownsMemory: true, type: FieldType(.timestamptz), format: .binary, configuration: configuration)
         }
     }
     
@@ -169,11 +194,10 @@ public final class Bind {
         let arrayString = "{\(elements.joined(separator: ","))}"
         self.init(string: arrayString, configuration: configuration)
     }
-    
-    public init(bytes: UnsafeMutablePointer<Int8>?, length: Int, type: FieldType, format: Format, configuration: Configuration) {
-        self.bytes = bytes
-        self.length = length
-        
+
+    public init(bytes: UnsafeMutablePointer<Int8>?, length: Int, ownsMemory: Bool, type: FieldType, format: Format, configuration: Configuration) {
+        self.buffer = bytes.map { SmartPointer(bytes: $0, length: length, ownsMemory: ownsMemory) }
+
         self.type = type
         self.format = format
         
@@ -182,12 +206,11 @@ public final class Bind {
         result = nil
     }
     
-    public init(result: Result, bytes: UnsafeMutablePointer<Int8>, length: Int, type: FieldType, format: Format, configuration: Configuration) {
+    public init(result: Result, bytes: UnsafeMutablePointer<Int8>, length: Int, ownsMemory: Bool, type: FieldType, format: Format, configuration: Configuration) {
         self.result = result
-        
-        self.bytes = bytes
-        self.length = length
-        
+
+        self.buffer = SmartPointer(bytes: bytes, length: length, ownsMemory: ownsMemory)
+
         self.type = type
         self.format = format
         

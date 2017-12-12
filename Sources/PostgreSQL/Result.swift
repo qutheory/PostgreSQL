@@ -122,6 +122,7 @@ public class Result {
                             result: self,
                             bytes: value,
                             length: length,
+                            ownsMemory: false,
                             type: type,
                             format: .binary,
                             configuration: connection.configuration
