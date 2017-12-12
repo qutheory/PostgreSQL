@@ -1,6 +1,7 @@
 import XCTest
 @testable import PostgreSQL
 import Foundation
+import Dispatch
 
 class PostgreSQLTests: XCTestCase {
     static let allTests = [
@@ -30,6 +31,9 @@ class PostgreSQLTests: XCTestCase {
         ("testUnsupportedObject", testUnsupportedObject),
         ("testNotification", testNotification),
         ("testNotificationWithPayload", testNotificationWithPayload),
+        ("testDispatchNotification", testDispatchNotification),
+        ("testDispatchNotificationInvalidConnection", testDispatchNotificationInvalidConnection),
+        ("testDispatchNotificationWithPayload", testDispatchNotificationWithPayload),
         ("testQueryToNode", testQueryToNode)
     ]
 
@@ -779,6 +783,45 @@ class PostgreSQLTests: XCTestCase {
         waitForExpectations(timeout: 5)
     }
 
+	func testDispatchNotification() throws {
+		let conn1 = try postgreSQL.makeConnection()
+		let conn2 = try postgreSQL.makeConnection()
+		
+		let testExpectation = expectation(description: "Receive notification")
+		
+		let queue = DispatchQueue.global()
+		var source: DispatchSourceRead?
+		source = try! conn1.listen(toChannel: "test_channel1", queue: queue) { (notification, error) in
+			XCTAssertEqual(notification?.channel, "test_channel1")
+			XCTAssertNil(notification?.payload)
+			XCTAssertNil(error)
+			
+			testExpectation.fulfill()
+			source?.cancel()
+		}
+		source?.resume()
+		
+		sleep(1)
+		
+		try conn2.notify(channel: "test_channel1", payload: nil)
+		
+		waitForExpectations(timeout: 5)
+	}
+	
+    func testDispatchNotificationInvalidConnection() throws {
+        let conn1 = try postgreSQL.makeConnection()
+        conn1.close()
+        do {
+            _ = try conn1.listen(toChannel: "test_channel1", queue: .global()) { (notification, error) in
+                XCTFail("callback should never be called")
+            }
+            XCTFail("exception should have been thrown because connection was not open")
+        } catch {
+            guard let pgerror = error as? PostgreSQLError else { XCTFail("incorrect error type"); return }
+            XCTAssertEqual(pgerror.code, .ioError)
+        }
+    }
+	
     func testNotificationWithPayload() throws {
         let conn1 = try postgreSQL.makeConnection()
         let conn2 = try postgreSQL.makeConnection()
@@ -800,6 +843,32 @@ class PostgreSQLTests: XCTestCase {
 
         waitForExpectations(timeout: 5)
     }
+
+	func testDispatchNotificationWithPayload() throws {
+		let conn1 = try postgreSQL.makeConnection()
+		let conn2 = try postgreSQL.makeConnection()
+		
+		let testExpectation = expectation(description: "Receive notification with payload")
+		
+		let queue = DispatchQueue.global()
+		var source: DispatchSourceRead?
+		source = try! conn1.listen(toChannel: "test_channel2", queue: queue) { (notification, error) in
+			XCTAssertEqual(notification?.channel, "test_channel2")
+			XCTAssertEqual(notification?.payload, "test_payload")
+			XCTAssertNotNil(notification?.payload)
+			XCTAssertNil(error)
+			
+			testExpectation.fulfill()
+			source?.cancel()
+		}
+		source?.resume()
+		
+		sleep(1)
+		
+		try conn2.notify(channel: "test_channel2", payload: "test_payload")
+		
+		waitForExpectations(timeout: 5)
+	}
 
     func testQueryToNode() throws {
         let conn = try postgreSQL.makeConnection()

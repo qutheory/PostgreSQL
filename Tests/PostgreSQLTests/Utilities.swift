@@ -8,7 +8,7 @@ extension PostgreSQL.Database {
             let postgreSQL = try PostgreSQL.Database(
                 hostname: "127.0.0.1",
                 port: 5432,
-                database: "postgres",
+                database: "test",
                 user: "postgres",
                 password: ""
             )

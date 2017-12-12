@@ -305,7 +305,7 @@ extension PostgreSQLError {
 extension PostgreSQLError {
     public init(code: Code, connection: Connection) {
         let reason: String
-        if let error = PQerrorMessage(connection.cConnection) {
+        if let error = PQerrorMessage(connection.pgConnection) {
             reason = String(cString: error)
         }
         else {

@@ -10,8 +10,11 @@ public final class Connection: ConnInfoInitializable {
     // MARK: - CConnection
     
     public typealias CConnection = OpaquePointer
-    
-    public let cConnection: CConnection
+
+    @available(*, deprecated: 2.2, message: "needs to be optional or could cause runtime crash passing invalid reference to C")
+    public var cConnection: CConnection { return pgConnection! }
+
+    public private(set) var pgConnection: CConnection?
     
     // MARK: - Init
 
@@ -27,14 +30,14 @@ public final class Connection: ConnInfoInitializable {
             string = "host='\(hostname)' port='\(port)' dbname='\(database)' user='\(user)' password='\(password)' client_encoding='UTF8'"
         }
 
-        cConnection = PQconnectdb(string)
+        pgConnection = PQconnectdb(string)
         try validateConnection()
     }
     
     // MARK: - Deinit
     
     deinit {
-        try? close()
+        close()
     }
     
     // MARK: - Execute
@@ -68,7 +71,7 @@ public final class Connection: ConnInfoInitializable {
         }
         
         let resultPointer: Result.Pointer? = PQexecParams(
-            cConnection,
+            pgConnection,
             query,
             Int32(binds.count),
             types,
@@ -85,27 +88,35 @@ public final class Connection: ConnInfoInitializable {
     // MARK: - Connection Status
     
     public var isConnected: Bool {
-        return PQstatus(cConnection) == CONNECTION_OK
+        return pgConnection != nil && PQstatus(pgConnection) == CONNECTION_OK
     }
 
     public var status: ConnStatusType {
-        return PQstatus(cConnection)
+        guard pgConnection != nil else { return CONNECTION_BAD }
+        return PQstatus(pgConnection)
     }
     
-    private func validateConnection() throws {
+    func validateConnection() throws {
+        guard pgConnection != nil else {
+            throw PostgreSQLError(code: .connectionDoesNotExist, connection: self)
+        }
         guard isConnected else {
             throw PostgreSQLError(code: .connectionFailure, connection: self)
         }
     }
 
     public func reset() throws {
-        try validateConnection()
-        PQreset(cConnection)
+        guard let connection = pgConnection else { return }
+        PQreset(connection)
+        guard status == CONNECTION_OK else {
+            throw PostgreSQLError(code: .connectionFailure, connection: self)
+        }
     }
 
-    public func close() throws {
-        try validateConnection()
-        PQfinish(cConnection)
+    public func close() {
+        guard pgConnection != nil else { return }
+        PQfinish(pgConnection)
+        pgConnection = nil
     }
     
     // MARK: - Transaction
@@ -152,6 +163,7 @@ public final class Connection: ConnInfoInitializable {
         public let channel: String
         public let payload: String?
         
+        /// internal initializer
         init(pgNotify: PGnotify) {
             channel = String(cString: pgNotify.relname)
             pid = Int(pgNotify.be_pid)
@@ -160,8 +172,7 @@ public final class Connection: ConnInfoInitializable {
                 let string = String(cString: pgNotify.extra)
                 if !string.isEmpty {
                     payload = string
-                }
-                else {
+                } else {
                     payload = nil
                 }
             }
@@ -171,12 +182,45 @@ public final class Connection: ConnInfoInitializable {
         }
     }
     
+    /// Creates a dispatch read source for this connection that will call `callback` on `queue` when a notification is received
+    ///
+    /// - Parameter channel: the channel to register for
+    /// - Parameter queue: the queue to create the DispatchSource on
+    /// - Parameter callback: the callback
+    /// - Parameter notification: The notification received from the database
+    /// - Parameter error: Any error while reading the notification. If not nil, the source will have been canceled
+    /// - Returns: the dispatch socket to activate
+    /// - Throws: if fails to get the socket for the connection
+    public func listen(toChannel channel: String, queue: DispatchQueue, callback: @escaping (_ notification: Notification?, _ error: Error?) -> Void) throws -> DispatchSourceRead {
+        let sock = PQsocket(self.pgConnection)
+        guard sock >= 0 else {
+            throw PostgreSQLError(code: .ioError, reason: "failed to get socket for connection")
+        }
+        let src = DispatchSource.makeReadSource(fileDescriptor: sock, queue: queue)
+        src.setEventHandler { [weak self] in
+            guard let strongSelf = self else { return }
+            guard strongSelf.pgConnection != nil else {
+                callback(nil, PostgreSQLError(code: .connectionDoesNotExist, reason: "connection does not exist"))
+                return
+            }
+            PQconsumeInput(strongSelf.pgConnection)
+            while let pgNotify = PQnotifies(strongSelf.pgConnection) {
+                let notification = Notification(pgNotify: pgNotify.pointee)
+                callback(notification, nil)
+                PQfreemem(pgNotify)
+            }
+        }
+        try self.execute("LISTEN \(channel)")
+        return src
+    }
+    
     /// Registers as a listener on a specific notification channel.
     ///
     /// - Parameters:
     ///   - channel: The channel to register for.
     ///   - queue: The queue to perform the listening on.
     ///   - callback: Callback containing any received notification or error and a boolean which can be set to true to stop listening.
+    @available(*, deprecated: 2.2, message: "replaced with version using DispatchSource")
     public func listen(toChannel channel: String, on queue: DispatchQueue = DispatchQueue.global(), callback: @escaping (Notification?, Error?, inout Bool) -> Void) {
         queue.async {
             var stop: Bool = false
@@ -190,9 +234,9 @@ public final class Connection: ConnInfoInitializable {
                     // Sleep to avoid looping continuously on cpu
                     sleep(1)
                     
-                    PQconsumeInput(self.cConnection)
+                    PQconsumeInput(self.pgConnection)
 
-                    while !stop, let pgNotify = PQnotifies(self.cConnection) {
+                    while !stop, let pgNotify = PQnotifies(self.pgConnection) {
                         let notification = Notification(pgNotify: pgNotify.pointee)
 
                         callback(notification, nil, &stop)
@@ -234,7 +278,7 @@ public final class Connection: ConnInfoInitializable {
     }
 
     private func getBooleanParameterStatus(key: String, `default` defaultValue: Bool = false) -> Bool {
-        guard let value = PQparameterStatus(cConnection, "integer_datetimes") else {
+        guard let value = PQparameterStatus(pgConnection, "integer_datetimes") else {
             return defaultValue
         }
         return String(cString: value) == "on"

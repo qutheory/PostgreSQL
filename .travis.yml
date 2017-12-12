@@ -9,9 +9,9 @@ matrix:
       env: SCHEME="PostgreSQL-Package"
 
 before_install:
+  - brew update
   - gem install xcpretty
   - brew tap vapor/tap
-  - brew update
   - brew install vapor
 
 install:

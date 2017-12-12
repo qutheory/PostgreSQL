@@ -9,6 +9,7 @@ class ConnectionTests: XCTestCase {
         ("testConnInfoRaw", testConnInfoRaw),
         ("testConnectionFailure", testConnectionFailure),
         ("testConnectionSuccess", testConnectionSuccess),
+        ("testInvalidConnection", testInvalidConnection),
     ]
 
     var postgreSQL: PostgreSQL.Database!
@@ -18,11 +19,12 @@ class ConnectionTests: XCTestCase {
         let conn = try postgreSQL.makeConnection()
 
         let connection = try postgreSQL.makeConnection()
-        XCTAssert(conn.status == CONNECTION_OK)
+		let status = conn.status
+        XCTAssert(status == CONNECTION_OK)
         XCTAssertTrue(connection.isConnected)
 
         try connection.reset()
-        try connection.close()
+        connection.close()
         XCTAssertFalse(connection.isConnected)
     }
 
@@ -86,4 +88,17 @@ class ConnectionTests: XCTestCase {
             XCTFail("Could not connect to database")
         }
     }
+	
+	func testInvalidConnection() throws {
+		postgreSQL = PostgreSQL.Database.makeTest()
+		let connection = try postgreSQL.makeConnection()
+		try connection.validateConnection()
+		connection.close()
+		do {
+			try connection.validateConnection()
+			XCTFail("connection was valid after close")
+		} catch {
+			// connection was invalid
+		}
+	}
 }
