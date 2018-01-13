@@ -44,7 +44,13 @@ public final class Connection: ConnInfoInitializable {
         let binds = values.map { $0.bind(with: configuration) }
         return try execute(query, binds)
     }
-    
+
+    @discardableResult
+    public func pullExecute(_ query: String, _ values: [Node] = []) throws -> ResultNodeSequence {
+        let binds = values.map { $0.bind(with: configuration) }
+        return try pullExecute(query, binds)
+    }
+
     @discardableResult
     public func execute(_ query: String, _ binds: [Bind]) throws -> Node {
         let result: Result = try self.execute(query, binds)
