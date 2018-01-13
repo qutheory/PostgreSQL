@@ -315,8 +315,8 @@ extension PostgreSQLError {
         self.init(code: code, reason: reason)
     }
     
-    public init(result: Result) {
-        guard let pointer = result.pointer else {
+    public init(pointer: OpaquePointer?) {
+        guard let pointer = pointer else {
             self.init(code: .unknown, reason: "Unknown")
             return
         }
@@ -329,7 +329,7 @@ extension PostgreSQLError {
         else {
             code = .unknown
         }
-        
+
         let reason: String
         if let messagePointer = PQresultErrorMessage(pointer) {
             reason = String(cString: messagePointer)
@@ -339,6 +339,10 @@ extension PostgreSQLError {
         }
         
         self.init(code: code, reason: reason)
+    }
+
+    public init(result: Result) {
+        self.init(pointer: result.pointer)
     }
 }
 

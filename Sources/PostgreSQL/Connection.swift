@@ -47,6 +47,17 @@ public final class Connection: ConnInfoInitializable {
     
     @discardableResult
     public func execute(_ query: String, _ binds: [Bind]) throws -> Node {
+        let result: Result = try self.execute(query, binds)
+        return try result.parseData()
+    }
+
+    @discardableResult
+    public func pullExecute(_ query: String, _ binds: [Bind]) throws -> ResultNodeSequence {
+        let result: Result = try self.execute(query, binds)
+        return try result.parseDataSequence()
+    }
+
+    private func execute(_ query: String, _ binds: [Bind]) throws -> Result {
         var types: [Oid] = []
         types.reserveCapacity(binds.count)
         
@@ -77,9 +88,8 @@ public final class Connection: ConnInfoInitializable {
             formats,
             Bind.Format.binary.rawValue
         )
-        
         let result = Result(pointer: resultPointer, connection: self)
-        return try result.parseData()
+        return result
     }
     
     // MARK: - Connection Status
