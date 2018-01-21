@@ -45,7 +45,7 @@ public final class Bind {
     public let format: Format
     
     public let configuration: Configuration
-    public let result: Result?
+    public let result: Any?
     
     // MARK: - Init
     
@@ -206,7 +206,7 @@ public final class Bind {
         result = nil
     }
     
-    public init(result: Result, bytes: UnsafeMutablePointer<Int8>, length: Int, ownsMemory: Bool, type: FieldType, format: Format, configuration: Configuration) {
+    public init(result: Any, bytes: UnsafeMutablePointer<Int8>, length: Int, ownsMemory: Bool, type: FieldType, format: Format, configuration: Configuration) {
         self.result = result
 
         self.buffer = SmartPointer(bytes: bytes, length: length, ownsMemory: ownsMemory)

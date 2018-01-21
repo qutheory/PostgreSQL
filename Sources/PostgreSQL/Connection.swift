@@ -53,17 +53,15 @@ public final class Connection: ConnInfoInitializable {
 
     @discardableResult
     public func execute(_ query: String, _ binds: [Bind]) throws -> Node {
-        let result: Result = try self.execute(query, binds)
-        return try result.parseData()
+        return try self.execute(query, binds, exec: execSync)
     }
 
     @discardableResult
     public func pullExecute(_ query: String, _ binds: [Bind]) throws -> ResultNodeSequence {
-        let result: Result = try self.execute(query, binds)
-        return try result.parseDataSequence()
+        return try self.execute(query, binds, exec: execAsync)
     }
 
-    private func execute(_ query: String, _ binds: [Bind]) throws -> Result {
+    private func execute<T>(_ query: String, _ binds: [Bind], exec: PQExec<T>) throws -> T {
         var types: [Oid] = []
         types.reserveCapacity(binds.count)
         
@@ -84,7 +82,7 @@ public final class Connection: ConnInfoInitializable {
             lengths.append(Int32(bind.length))
         }
         
-        let resultPointer: Result.Pointer? = PQexecParams(
+        return try exec(
             cConnection,
             query,
             Int32(binds.count),
@@ -94,10 +92,43 @@ public final class Connection: ConnInfoInitializable {
             formats,
             Bind.Format.binary.rawValue
         )
-        let result = Result(pointer: resultPointer, connection: self)
-        return result
     }
-    
+
+    private func execSync(_ conn: OpaquePointer, _ command: UnsafePointer<Int8>?, _ nParams: Int32, _ paramTypes: UnsafePointer<Oid>?, _ paramValues: UnsafePointer<UnsafePointer<Int8>?>?, _ paramLengths: UnsafePointer<Int32>?, _ paramFormats: UnsafePointer<Int32>?, _ resultFormat: Int32) throws -> Node {
+        let resultPointer: Result.Pointer? = PQexecParams(
+            conn,
+            command,
+            nParams,
+            paramTypes,
+            paramValues,
+            paramLengths,
+            paramFormats,
+            resultFormat)
+        return try Result(pointer: resultPointer, connection: self).parseData()
+    }
+
+    private func execAsync(_ conn: OpaquePointer, _ command: UnsafePointer<Int8>?, _ nParams: Int32, _ paramTypes: UnsafePointer<Oid>?, _ paramValues: UnsafePointer<UnsafePointer<Int8>?>?, _ paramLengths: UnsafePointer<Int32>?, _ paramFormats: UnsafePointer<Int32>?, _ resultFormat: Int32) throws -> ResultNodeSequence {
+        let resultValue = PQsendQueryParams(
+            conn,
+            command,
+            nParams,
+            paramTypes,
+            paramValues,
+            paramLengths,
+            paramFormats,
+            resultFormat)
+        if resultValue == 0 {
+            throw PostgreSQLError(code: .unknown, connection: self)
+        }
+        if PQsetSingleRowMode(conn) == 0 {
+            throw PostgreSQLError(code: .unknown, connection: self)
+        }
+        return try ResultNodeSequence(connection: self)
+    }
+
+
+    typealias PQExec<T> = (_ conn: OpaquePointer, _ command: UnsafePointer<Int8>?, _ nParams: Int32, _ paramTypes: UnsafePointer<Oid>?, _ paramValues: UnsafePointer<UnsafePointer<Int8>?>?, _ paramLengths: UnsafePointer<Int32>?, _ paramFormats: UnsafePointer<Int32>?, _ resultFormat: Int32) throws -> T
+
     // MARK: - Connection Status
     
     public var isConnected: Bool {

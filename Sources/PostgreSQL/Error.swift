@@ -15,6 +15,10 @@ public enum PostgresSQLStatusError: Error {
     case badResponse
 }
 
+public struct PostgreSQLCancelError: Error {
+    public let reason: String
+}
+
 extension PostgreSQLError {
     public enum Code: String {
         // Class 01 — Warning
