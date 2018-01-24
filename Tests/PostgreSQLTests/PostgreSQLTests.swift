@@ -901,4 +901,37 @@ class PostgreSQLTests: XCTestCase {
             XCTAssertEqual(resuls.count, 0)
         }
     }
+
+    func testPullExecute() throws {
+        let conn = try postgreSQL.makeConnection()
+
+        try conn.execute("DROP TABLE IF EXISTS foo")
+        try conn.execute("CREATE TABLE foo (id serial)")
+
+        try conn.execute("INSERT INTO foo VALUES (DEFAULT)")
+        try conn.execute("INSERT INTO foo VALUES (DEFAULT)")
+        try conn.execute("INSERT INTO foo VALUES (DEFAULT)")
+        try conn.execute("INSERT INTO foo VALUES (DEFAULT)")
+        try conn.execute("INSERT INTO foo VALUES (DEFAULT)")
+        try conn.execute("INSERT INTO foo VALUES (DEFAULT)")
+        try conn.execute("INSERT INTO foo VALUES (DEFAULT)")
+        try conn.execute("INSERT INTO foo VALUES (DEFAULT)")
+
+        let results = try conn.pullExecute("SELECT * FROM foo")
+
+        let values = try Array(results.dropFirst(2).prefix(3)).flatMap { rowResult -> Int? in
+            switch rowResult {
+            case let .node(n):
+                guard let nint = n["id"]?.int else {
+                    XCTFail("Expected int value in \(n)")
+                    return nil
+                }
+                return nint
+            case let .error(err):
+                throw err
+            }
+        }
+
+        XCTAssertEqual(values, [3, 4, 5])
+    }
 }
