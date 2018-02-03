@@ -131,7 +131,12 @@ public class ResultNodeSequence: Sequence {
         clearConnection(self.connection.cConnection)
     }
 
-    public func cancel() throws {
+    public func close() throws {
+        try self.cancel()
+        clearConnection(self.connection.cConnection)
+    }
+
+    private func cancel() throws {
         let cancel = PQgetCancel(self.connection.cConnection)
         let errBufSize: Int32 = 256
         let ptr = UnsafeMutablePointer<Int8>.allocate(capacity: Int(errBufSize))

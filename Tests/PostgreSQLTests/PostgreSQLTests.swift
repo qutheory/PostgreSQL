@@ -933,5 +933,25 @@ class PostgreSQLTests: XCTestCase {
         }
 
         XCTAssertEqual(values, [3, 4, 5])
+
+        try results.close()
+
+        let results2 = try conn.pullExecute("SELECT * FROM foo")
+
+        let values2 = try Array(results2.dropFirst(3).prefix(4)).flatMap { rowResult -> Int? in
+            switch rowResult {
+            case let .node(n):
+                guard let nint = n["id"]?.int else {
+                    XCTFail("Expected int value in \(n)")
+                    return nil
+                }
+                return nint
+            case let .error(err):
+                throw err
+            }
+        }
+
+        XCTAssertEqual(values2, [4, 5, 6, 7])
+
     }
 }
