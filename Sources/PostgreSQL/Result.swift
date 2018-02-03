@@ -104,6 +104,7 @@ public class Result {
     }
 }
 
+/// ResultNodeSequence is a result that pulls the rows from the database on demand.
 public class ResultNodeSequence: Sequence {
     public enum PostgreSQLRowResult {
         case error(Error)
