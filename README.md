@@ -97,6 +97,16 @@ let postgreSQL =  PostgreSQL.Database(
 let version = try postgreSQL.execute("SELECT version()")
 ```
 
+## Select with lazily fetched results
+
+```swift
+let seq = try postgreSQL.pullExecute("SELECT * FROM foo")
+for row in seq {
+	print("row: \(row)")
+}
+```
+
+
 ## Prepared Statement
 
 The second parameter to `execute()` is an array of `PostgreSQL.Value`s.
